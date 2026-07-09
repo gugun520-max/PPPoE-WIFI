@@ -10,7 +10,7 @@
         @media print {
             body * { visibility: hidden; }
             #areaCetakStruk, #areaCetakStruk * { visibility: visible; }
-            #areaCetakStruk { position: absolute; left: 0; top: 0; width: 100%; }
+            #areaCetakStruk { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
         }
     </style>
 </head>
@@ -56,13 +56,11 @@
                 <p class="text-[11px] text-slate-400 pt-2">Sistem Pengaman Billing Terintegrasi OTP Multi-WhatsApp</p>
             </div>
 
-            <!-- Form Tahap 1: Request OTP -->
             <form id="formRequestOtp" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Username Admin</label>
                     <input type="text" id="loginUsername" placeholder="Masukkan username" class="w-full border border-slate-200 p-3 rounded-xl text-sm bg-slate-50 focus:outline-blue-500 font-medium" required>
                 </div>
-                
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kirim OTP Ke WhatsApp</label>
                     <select id="pilihanOwnerOtp" class="w-full border border-slate-200 p-3 rounded-xl text-sm bg-slate-50 focus:outline-blue-500 font-medium" required>
@@ -70,13 +68,11 @@
                         <option value="owner2">📱 Owner 2 / Admin Lapangan</option>
                     </select>
                 </div>
-
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-md">
                     🔑 Minta Kode OTP via WA
                 </button>
             </form>
 
-            <!-- Form Tahap 2: Input OTP -->
             <form id="formVerifikasiOtp" class="space-y-4 hidden border-t border-dashed border-slate-200 pt-4">
                 <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-center">
                     <p class="text-xs text-amber-800">Kode OTP telah dibuat. Silakan cek WhatsApp, lalu masukkan kodenya di bawah ini:</p>
@@ -96,10 +92,8 @@
         </div>
     </div>
 
-
     <!-- ================= DASHBOARD UTAMA ================= -->
     <div id="kontenAplikasi" class="hidden flex flex-col md:flex-row min-h-screen">
-        <!-- Sidebar Menu -->
         <aside class="w-full md:w-64 bg-slate-950 text-slate-200 p-6 flex flex-col justify-between shadow-xl">
             <div>
                 <div class="mb-6 space-y-1">
@@ -113,11 +107,10 @@
                 </nav>
             </div>
             <div class="text-xs text-slate-500 pt-6 border-t border-slate-900">
-                NETLAND.id Billing Engine v4.5
+                NETLAND.id Billing Engine v5.5
             </div>
         </aside>
 
-        <!-- Konten Utama -->
         <main class="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
             <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -129,6 +122,22 @@
                 </button>
             </header>
 
+            <!-- RINGKASAN KEUANGAN & STATISTIK -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-bold uppercase">Total Pendapatan (Bulan Ini)</p>
+                    <h3 id="statTotalPendapatan" class="text-xl font-black text-emerald-600 mt-1">Rp 0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-bold uppercase">Sudah Bayar / Lunas</p>
+                    <h3 id="statLunas" class="text-xl font-black text-blue-600 mt-1">0 Pelanggan</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-bold uppercase">Belum Bayar (Tunggakan)</p>
+                    <h3 id="statTunggakan" class="text-xl font-black text-rose-600 mt-1">0 Pelanggan</h3>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- FORM REGISTRASI -->
                 <div class="lg:col-span-3 space-y-6">
@@ -137,13 +146,15 @@
                         <form id="formPelanggan" class="space-y-4">
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 <input type="text" id="nama" placeholder="Nama Pelanggan" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" required>
+                                
+                                <!-- DROPDOWN PAKET DENGAN HARGA OTOMATIS -->
                                 <select id="paket" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" required>
-                                    <option value="">-- Pilih Paket --</option>
-                                    <option value="10 Mbps">10 Mbps</option>
-                                    <option value="20 Mbps">20 Mbps</option>
-                                    <option value="50 Mbps">50 Mbps</option>
+                                    <option value="" data-harga="0">-- Pilih Paket --</option>
+                                    <option value="30 Mbps" data-harga="135000">30 Mbps</option>
+                                    <option value="50 Mbps" data-harga="165000">50 Mbps</option>
                                 </select>
-                                <input type="number" id="tagihan" placeholder="Tarif (Rp)" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" required>
+                                
+                                <input type="number" id="tagihan" placeholder="Tarif (Rp)" class="border p-2.5 rounded-xl text-sm w-full bg-slate-200 font-bold text-slate-700" readonly required>
                                 <input type="number" id="jatuh_tempo" placeholder="Tgl Tempo (1-31)" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" min="1" max="31" required>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -172,7 +183,7 @@
                         </form>
                         <div class="mt-4 pt-4 border-t border-slate-100">
                             <p class="text-[11px] font-bold text-slate-400 uppercase mb-2">Daftar ODP:</p>
-                            <div id="listOdpHapus" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs font-mono"></div>
+                            <div id="listOdpHapus" class="space-y-2 max-h-40 overflow-y-auto pr-1 text-xs font-mono"></div>
                         </div>
                     </section>
                 </div>
@@ -186,18 +197,18 @@
                         <p class="text-xs text-amber-800 mt-0.5" id="teksInfoTerdampak">Menghitung dampak gangguan...</p>
                     </div>
                     <button id="btnKirimMassal" class="bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2.5 rounded-xl transition shadow-md">
-                        🚀 KIRIM KE SEMUA (MASSAL)
+                        🚀 KIRIM MASSAL SEQUENTIAL
                     </button>
                 </div>
                 <div class="bg-white p-4 rounded-xl border border-amber-200 space-y-2">
-                    <textarea id="inputTemplatePesan" rows="4" class="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50"></textarea>
+                    <textarea id="inputTemplatePesan" rows="6" class="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-amber-500"></textarea>
                 </div>
                 <div id="tombolNotifKontainer" class="flex flex-wrap gap-2"></div>
             </div>
 
             <!-- SEARCH BAR -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                <input type="text" id="inputCariPelanggan" placeholder="Cari nama, ID, atau ODP..." class="w-full border border-slate-200 p-2.5 rounded-xl text-sm bg-slate-50">
+                <input type="text" id="inputCariPelanggan" placeholder="Cari nama, ID, Invoice, No WA, atau ODP..." class="w-full border border-slate-200 p-2.5 rounded-xl text-sm bg-slate-50">
                 <div id="statusTotalPencarian" class="text-xs text-slate-400 font-medium"></div>
             </div>
 
@@ -207,16 +218,16 @@
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-slate-50 text-slate-400 text-[11px] uppercase border-b border-slate-200">
-                                <th class="p-4">ID Pelanggan</th>
+                                <th class="p-4">ID / Invoice</th>
                                 <th class="p-4">Nama Pelanggan</th>
                                 <th class="p-4">Titik ODP</th>
-                                <th class="p-4">No. Invoice</th>
                                 <th class="p-4">Paket & Tarif</th>
+                                <th class="p-4">Tempo</th>
                                 <th class="p-4">Status</th>
-                                <th class="p-4 text-center">Aksi Status</th>
-                                <th class="p-4 text-center">Maintenance</th>
-                                <th class="p-4 text-center">Aksi Data</th>
-                                <th class="p-4 text-right">WhatsApp</th>
+                                <th class="p-4 text-center">Aksi Transaksi</th>
+                                <th class="p-4 text-center">Isolir / Notif</th>
+                                <th class="p-4 text-center">Cetak</th>
+                                <th class="p-4 text-center">Hapus</th>
                             </tr>
                         </thead>
                         <tbody id="tabelBody" class="divide-y divide-slate-100 text-slate-700">
@@ -230,7 +241,8 @@
         </main>
     </div>
 
-    <div id="areaCetakStruk" class="hidden bg-white p-4 text-black font-mono text-xs max-w-[80mm] mx-auto border border-dashed border-slate-300"></div>
+    <!-- AREA STRUK HIDDEN (AKAN MUNCUL SAAT PRINT) -->
+    <div id="areaCetakStruk" class="hidden bg-white p-4 text-black font-mono text-xs max-w-[80mm] mx-auto border border-dashed border-slate-400"></div>
 
     <!-- SCRIPT UTAMA -->
     <script type="module">
@@ -280,8 +292,8 @@
             const odpCollection = collection(db, "daftar_odp");
 
             const USERNAME_VALID = "admin"; 
-            const NOMOR_OWNER_1 = "6285780088227"; // 👈 GANTI NOMOR OWNER 1
-            const NOMOR_OWNER_2 = "6287735376239"; // 👈 GANTI NOMOR OWNER 2
+            const NOMOR_OWNER_1 = "6281111111111"; 
+            const NOMOR_OWNER_2 = "6282222222222"; 
 
             let KODE_OTP_SEKARANG = null;
 
@@ -301,7 +313,6 @@
                 const teksOtp = `*PROTEKSI SECURITY NETLAND.id*\nKode OTP Anda adalah: *${KODE_OTP_SEKARANG}*`;
                 
                 window.location.href = `https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`;
-
                 document.getElementById("formVerifikasiOtp").classList.remove("hidden");
                 alert("Membuka WhatsApp untuk mengirim token. Setelah terkirim, silakan kembali ke halaman ini untuk memasukkan kode.");
             });
@@ -318,8 +329,7 @@
                             jalankanAplikasiUtama();
                         })
                         .catch((err) => { 
-                            // PERBAIKAN DI SINI: Deteksi otomatis kredensial salah, langsung reset & munculkan form setup
-                            alert("Kredensial Firebase Salah atau Kedaluwarsa! Memori dibersihkan. Silakan isi ulang kredensial baru.");
+                            alert("Kredensial Firebase Salah atau Kedaluwarsa! Memori dibersihkan.");
                             localStorage.clear();
                             boxSetup.style.setProperty("display", "flex", "important");
                         });
@@ -337,8 +347,22 @@
                 let listPelangganGlobal = []; 
                 let statusOdpGlobal = {}; 
 
+                // LOGIKA OTOMATIS HARGA PAKET DROPDOWN
+                document.getElementById("paket").addEventListener("change", (e) => {
+                    const selectedOption = e.target.options[e.target.selectedIndex];
+                    const hargaOtomatis = selectedOption.getAttribute("data-harga");
+                    const inputTagihan = document.getElementById("tagihan");
+                    
+                    if (hargaOtomatis && hargaOtomatis !== "0") {
+                        inputTagihan.value = hargaOtomatis;
+                    } else {
+                        inputTagihan.value = "";
+                    }
+                });
+
+                // REDAKSI BARU: NOTIFIKASI GANGGUAN MASSAL (SOPAN & PANJANG)
                 const areaTeksInput = document.getElementById("inputTemplatePesan");
-                areaTeksInput.value = localStorage.getItem("draft_pesan_gangguan") || "Info NETLAND.id:\nYth. Kak [nama],\n\nSaat ini sedang dilakukan pemeliharaan jaringan pada ODP [odp]. Koneksi terputus sementara.";
+                areaTeksInput.value = localStorage.getItem("draft_pesan_gangguan") || "Selamat pagi/siang/malam, Bapak/Ibu Pelanggan Setia NETLAND.id.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur ODP [odp] demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan penurunan layanan atau pemutusan koneksi sementara waktu pada perangkat pelanggan di area terdampak. Estimasi perbaikan diupayakan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id";
 
                 areaTeksInput.addEventListener("input", () => {
                     localStorage.setItem("draft_pesan_gangguan", areaTeksInput.value);
@@ -349,6 +373,22 @@
                     let teksJadi = areaTeksInput.value.replace(/\[nama\]/g, namaPelanggan).replace(/\[odp\]/g, kodeOdp);
                     return `https://wa.me/${noWa}?text=${encodeURIComponent(teksJadi)}`;
                 }
+
+                // BROADCAST MASSAL SEQUENTIAL
+                document.getElementById("btnKirimMassal").addEventListener("click", () => {
+                    const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
+                    const terdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
+                    
+                    if(terdampak.length === 0) return alert("Tidak ada pelanggan yang terdampak.");
+                    
+                    if(confirm(`Sistem akan membuka tab WhatsApp berurutan untuk ${terdampak.length} pelanggan. Lanjutkan?`)) {
+                        terdampak.forEach((p, index) => {
+                            setTimeout(() => {
+                                window.open(generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp), '_blank');
+                            }, index * 1500); 
+                        });
+                    }
+                });
 
                 document.getElementById("inputCariPelanggan").addEventListener("input", () => renderTabelPelanggan(listPelangganGlobal));
 
@@ -370,11 +410,30 @@
 
                     pelangganTerdampak.forEach(p => {
                         const btnWa = document.createElement("button");
-                        btnWa.className = "bg-amber-600 text-white text-[11px] px-2.5 py-1.5 rounded-lg";
+                        btnWa.className = "bg-amber-600 hover:bg-amber-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg transition";
                         btnWa.innerText = `👤 ${p.nama} (${p.kode_odp})`;
-                        btnWa.onclick = () => window.location.href = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
+                        btnWa.onclick = () => window.open(generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp), '_blank');
                         tombolKontainer.appendChild(btnWa);
                     });
+                }
+
+                function hitungStatistik(data) {
+                    let totalPendapatan = 0;
+                    let totalLunas = 0;
+                    let totalTunggakan = 0;
+
+                    data.forEach(p => {
+                        if(p.status_bayar === "Lunas") {
+                            totalPendapatan += Number(p.tagihan || 0);
+                            totalLunas++;
+                        } else {
+                            totalTunggakan++;
+                        }
+                    });
+
+                    document.getElementById("statTotalPendapatan").innerText = formatRupiah(totalPendapatan);
+                    document.getElementById("statLunas").innerText = `${totalLunas} Pelanggan`;
+                    document.getElementById("statTunggakan").innerText = `${totalTunggakan} Pelanggan`;
                 }
 
                 onSnapshot(odpCollection, (snapshot) => {
@@ -395,23 +454,34 @@
                         selectOdp.appendChild(option);
 
                         const div = document.createElement("div");
-                        div.className = "p-2 rounded-xl border bg-slate-50 flex justify-between items-center";
+                        div.className = "p-2 rounded-xl border bg-slate-50 flex justify-between items-center text-[11px]";
                         div.innerHTML = `
-                            <span>${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '⚠️' : '🟢'}</span>
-                            <button data-id="${idOdp}" data-status="${dataOdp.is_maintenance || false}" class="btn-toggle-mt text-[10px] bg-slate-800 text-white p-1 rounded">Toggle</button>
+                            <span class="font-bold">${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '⚠️' : '🟢'}</span>
+                            <div class="flex gap-1">
+                                <button data-id="${idOdp}" data-status="${dataOdp.is_maintenance || false}" class="btn-toggle-mt bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px]">Toggle</button>
+                                <button data-id="${idOdp}" class="btn-hapus-odp bg-rose-600 text-white px-1 py-0.5 rounded text-[10px]">🗑️</button>
+                            </div>
                         `;
                         listOdpHapus.appendChild(div);
                     });
+
                     document.querySelectorAll('.btn-toggle-mt').forEach(b => b.addEventListener('click', async (e) => {
                         const id = e.target.getAttribute('data-id');
                         const st = e.target.getAttribute('data-status') === 'true';
                         await updateDoc(doc(db, "daftar_odp", id), { is_maintenance: !st });
+                    }));
+
+                    document.querySelectorAll('.btn-hapus-odp').forEach(b => b.addEventListener('click', async (e) => {
+                        if(confirm("Hapus ODP ini dari Master database?")) {
+                            await deleteDoc(doc(db, "daftar_odp", e.target.getAttribute('data-id')));
+                        }
                     }));
                 });
 
                 onSnapshot(pppoeCollection, (snapshot) => {
                     listPelangganGlobal = []; 
                     snapshot.forEach((ds) => { listPelangganGlobal.push({ idDoc: ds.id, ...ds.data() }); });
+                    hitungStatistik(listPelangganGlobal);
                     renderTabelPelanggan(listPelangganGlobal);
                 });
 
@@ -420,22 +490,57 @@
                     const keyword = document.getElementById("inputCariPelanggan").value.toLowerCase().trim();
                     tbody.innerHTML = "";
 
-                    const filtered = dataArray.filter(p => p.nama?.toLowerCase().includes(keyword) || p.id_pelanggan?.toLowerCase().includes(keyword));
-                    document.getElementById("statusTotalPencarian").innerText = `Total: ${filtered.length} data.`;
+                    const filtered = dataArray.filter(p => 
+                        p.nama?.toLowerCase().includes(keyword) || 
+                        p.id_pelanggan?.toLowerCase().includes(keyword) ||
+                        p.id_tagihan?.toLowerCase().includes(keyword) ||
+                        p.kode_odp?.toLowerCase().includes(keyword) ||
+                        p.no_wa?.includes(keyword)
+                    );
+                    document.getElementById("statusTotalPencarian").innerText = `Total Terfilter: ${filtered.length} data.`;
+
+                    if(filtered.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400">Tidak ada data pelanggan cocok.</td></tr>`;
+                        return;
+                    }
 
                     filtered.forEach((data) => {
+                        const isLunas = data.status_bayar === 'Lunas';
                         const tr = document.createElement("tr");
+                        tr.className = isLunas ? "bg-white" : "bg-rose-50/40";
+                        
                         tr.innerHTML = `
-                            <td class="p-4 font-mono">${data.id_pelanggan}</td>
-                            <td class="p-4 font-bold">${data.nama}</td>
-                            <td class="p-4 font-mono uppercase">${data.kode_odp || '-'} (P:${data.port_odp || '-'})</td>
-                            <td class="p-4">${data.id_tagihan}</td>
-                            <td class="p-4">${data.paket} (${formatRupiah(data.tagihan)})</td>
-                            <td class="p-4">${data.status_bayar}</td>
-                            <td class="p-4 text-center"><button data-id="${data.idDoc}" data-status="${data.status_bayar === 'Lunas' ? 'Belum Bayar' : 'Lunas'}" class="btn-toggle bg-blue-600 text-white p-1 rounded text-xs">Ubah Status</button></td>
-                            <td class="p-4 text-center"><button class="bg-amber-500 text-white p-1 rounded text-xs" onclick="window.location.href='${generateLinkWhatsApp(data.no_wa, data.nama, data.kode_odp)}'">Maint</button></td>
-                            <td class="p-4 text-center"><button data-id="${data.idDoc}" class="btn-hapus-user bg-red-600 text-white p-1 rounded">🗑️</button></td>
-                            <td class="p-4 text-right"><button class="bg-emerald-600 text-white p-1 rounded text-xs" onclick="window.location.href='https://wa.me/${data.no_wa}?text=Tagihan'">WA</button></td>
+                            <td class="p-4 font-mono text-xs">
+                                <span class="font-bold text-slate-900">${data.id_pelanggan}</span><br>
+                                <span class="text-[10px] text-slate-400">${data.id_tagihan}</span>
+                            </td>
+                            <td class="p-4 font-bold text-slate-900">${data.nama}</td>
+                            <td class="p-4 font-mono uppercase text-xs">${data.kode_odp || '-'} <span class="text-blue-600 font-bold">[P:${data.port_odp || '-'}]</span></td>
+                            <td class="p-4 text-xs font-medium">${data.paket}<br><span class="text-slate-500">${formatRupiah(data.tagihan)}</span></td>
+                            <td class="p-4 text-center font-bold text-xs">Tgl ${data.jatuh_tempo || '-'}</td>
+                            <td class="p-4">
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-black ${isLunas ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                    ${data.status_bayar}
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button data-id="${data.idDoc}" data-status="${isLunas ? 'Belum Bayar' : 'Lunas'}" class="btn-toggle text-xs font-bold ${isLunas ? 'bg-slate-600' : 'bg-emerald-600'} text-white px-2 py-1 rounded-xl shadow-sm">
+                                    ${isLunas ? 'Set Unpaid' : '💳 Set Lunas'}
+                                </button>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button class="btn-isolir text-xs font-bold bg-rose-600 text-white px-2 py-1 rounded-xl" data-wa="${data.no_wa}" data-nama="${data.nama}" data-inv="${data.id_tagihan}" data-tagihan="${data.tagihan}">
+                                    ⚠️ Isolir / Notif
+                                </button>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button class="btn-test-print btn-cetak bg-slate-200 hover:bg-slate-300 text-slate-800 px-2 py-1 rounded-xl text-xs font-bold" data-id="${data.idDoc}">
+                                    🖨️ Struk
+                                </button>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button data-id="${data.idDoc}" class="btn-hapus-user bg-rose-100 hover:bg-rose-200 text-rose-600 p-1.5 rounded-xl transition">🗑️</button>
+                            </td>
                         `;
                         tbody.appendChild(tr);
                     });
@@ -443,9 +548,51 @@
                     document.querySelectorAll('.btn-toggle').forEach(b => b.addEventListener('click', async (e) => {
                         await updateDoc(doc(db, "pelanggan_pppoe", e.target.getAttribute('data-id')), { status_bayar: e.target.getAttribute('data-status') });
                     }));
+
                     document.querySelectorAll('.btn-hapus-user').forEach(b => b.addEventListener('click', async (e) => {
-                        if(confirm("Hapus?")) await deleteDoc(doc(db, "pelanggan_pppoe", e.target.getAttribute('data-id')));
+                        if(confirm("Hapus seluruh data pelanggan ini secara permanen dari Cloud?")) {
+                            await deleteDoc(doc(db, "pelanggan_pppoe", e.target.closest('button').getAttribute('data-id')));
+                        }
                     }));
+
+                    // CETAK STRUK THERMAL 80mm
+                    document.querySelectorAll('.btn-cetak').forEach(b => b.addEventListener('click', (e) => {
+                        const targetId = e.target.getAttribute('data-id');
+                        const p = listPelangganGlobal.find(item => item.idDoc === targetId);
+                        if(!p) return;
+
+                        const areaStruk = document.getElementById("areaCetakStruk");
+                        areaStruk.innerHTML = `
+                            <div style="text-align:center; font-weight:bold; font-size:14px;">🌐 NETLAND.id</div>
+                            <div style="text-align:center; margin-bottom:10px;">Bukti Pembayaran Internet Sah</div>
+                            <hr style="border-top:1px dashed #000;">
+                            <p>No. Invoice : ${p.id_tagihan}</p>
+                            <p>ID Player   : ${p.id_pelanggan}</p>
+                            <p>Nama        : ${p.nama}</p>
+                            <p>Paket Line  : ${p.paket}</p>
+                            <p>ODP Jalur   : ${p.kode_odp} / Port:${p.port_odp}</p>
+                            <hr style="border-top:1px dashed #000;">
+                            <p style="font-size:13px; font-weight:bold;">TOTAL BAYAR: ${formatRupiah(p.tagihan)}</p>
+                            <p>Status      : LUNAS (Paid)</p>
+                            <p>Tanggal     : ${new Date().toLocaleDateString('id-ID')}</p>
+                            <hr style="border-top:1px dashed #000;">
+                            <div style="text-align:center; margin-top:10px;">Terima Kasih Atas Kepercayaan Anda!</div>
+                        `;
+                        window.print();
+                    }));
+
+                    // REDAKSI BARU: NOTIFIKASI JATUH TEMPO / REMINDER ISOLIR (SOPAN & PANJANG)
+                    document.querySelectorAll('.btn-isolir').forEach(b => b.addEventListener('click', (e) => {
+                        const btn = e.target;
+                        const wa = btn.getAttribute('data-wa');
+                        const nama = btn.getAttribute('data-nama');
+                        const inv = btn.getAttribute('data-inv');
+                        const tag = formatRupiah(btn.getAttribute('data-tagihan'));
+                        
+                        const teksIsolir = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu. Melalui pesan resmi ini, kami dari bagian administrasi NETLAND.id ingin menginformasikan mengenai layanan internet aktif Anda dengan nomor Invoice *${inv}*.\n\nKami mencatat bahwa masa aktif paket internet Anda telah memasuki/melewati tanggal jatuh tempo pembayaran dengan total tagihan sebesar *${tag}*.\n\nAgar kenyamanan aktivitas digital Anda dan keluarga di rumah tetap terjaga tanpa adanya kendala pemutusan (isolir) sistem otomatis, kami memohon kesediaan Bapak/Ibu untuk melakukan pembaruan pembayaran sebelum sistem melakukan penonaktifan akses PPPoE sementara.\n\nJika Bapak/Ibu sudah melakukan pembayaran atau membutuhkan bantuan/konfirmasi lebih lanjut mengenai detail tagihan, silakan abaikan pesan ini atau hubungi tim support kami dengan melampirkan bukti transfer.\n\nTerima kasih banyak atas perhatian, loyalitas, dan kerja sama yang terjalin dengan baik.\n\nHormat kami,\nBilling Management NETLAND.id`;
+                        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksIsolir)}`, '_blank');
+                    }));
+
                     perbaruiPanelNotifikasiMassal();
                 }
 
@@ -457,8 +604,13 @@
 
                 document.getElementById("formPelanggan").addEventListener("submit", async (e) => {
                     e.preventDefault();
+                    
                     let no_wa = document.getElementById("no_wa").value.trim().replace(/[^0-9]/g, '');
                     if (no_wa.startsWith("0")) no_wa = "62" + no_wa.substring(1);
+                    
+                    const tglTempo = Number(document.getElementById("jatuh_tempo").value);
+                    if(tglTempo < 1 || tglTempo > 31) return alert("Tanggal jatuh tempo wajib di antara rentang 1-31!");
+
                     const idOto = "NET-" + Math.floor(1000 + Math.random() * 9000);
                     
                     await addDoc(pppoeCollection, {
@@ -466,16 +618,18 @@
                         nama: document.getElementById("nama").value.trim(),
                         paket: document.getElementById("paket").value,
                         tagihan: Number(document.getElementById("tagihan").value),
-                        jatuh_tempo: Number(document.getElementById("jatuh_tempo").value),
+                        jatuh_tempo: tglTempo,
                         no_wa: no_wa, 
                         kode_odp: document.getElementById("pilihan_odp").value,
                         port_odp: document.getElementById("port_odp").value, 
                         status_bayar: "Belum Bayar"
                     });
                     document.getElementById("formPelanggan").reset();
+                    alert("Pelanggan baru berhasil didaftarkan ke cloud database!");
                 });
             }
         }
     </script>
 </body>
 </html>
+
