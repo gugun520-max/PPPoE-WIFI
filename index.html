@@ -47,7 +47,6 @@
     <div id="screenLogin" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-6">
             <div class="text-center space-y-1">
-                <!-- Logo & Brand Update -->
                 <div class="flex items-center justify-center gap-2 text-2xl font-black text-slate-900 tracking-wider">
                     <span>🌐 NETLAND<span class="text-blue-600">.id</span></span>
                 </div>
@@ -92,7 +91,7 @@
             </form>
             
             <div class="text-center">
-                <button id="btnResetConfig" class="text-[10px] text-slate-400 underline hover:text-rose-500">⚙️ Reset Kredensial Firebase HP Ini</button>
+                <button id="btnResetConfig" class="text-[10px] text-slate-400 underline hover:text-rose-500 cursor-pointer">⚙️ Reset Kredensial Firebase HP Ini</button>
             </div>
         </div>
     </div>
@@ -104,7 +103,6 @@
         <!-- Sidebar Menu -->
         <aside class="w-full md:w-64 bg-slate-950 text-slate-200 p-6 flex flex-col justify-between shadow-xl">
             <div>
-                <!-- Brand Sidebar Update -->
                 <div class="mb-6 space-y-1">
                     <h1 class="text-xl font-black text-white tracking-wider flex items-center gap-1.5">
                         🌐 NETLAND<span class="text-blue-500">.id</span>
@@ -262,14 +260,25 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Cek apakah konfigurasi sudah tersimpan di browser HP ini
+        // Ambil data konfigurasi lokal
         let savedApiKey = localStorage.getItem("fb_api_key");
         let savedEmail = localStorage.getItem("fb_email");
         let savedPassword = localStorage.getItem("fb_password");
 
-        if (!savedApiKey || !savedEmail || !savedPassword) {
+        // VALIDASI TOTAL: Jika kosong atau tidak valid, PAKSA kotak hitam muncul langsung!
+        if (!savedApiKey || savedApiKey.trim() === "" || !savedEmail || savedEmail.trim() === "" || !savedPassword || savedPassword.trim() === "") {
             document.getElementById("screenSetup").classList.remove("hidden");
         }
+
+        // Fungsi penangan tombol reset (Diletakkan di luar agar tidak ikut terkunci)
+        document.getElementById("btnResetConfig").addEventListener("click", () => {
+            if(confirm("Hapus konfigurasi Firebase dari HP ini?")) {
+                localStorage.removeItem("fb_api_key");
+                localStorage.removeItem("fb_email");
+                localStorage.removeItem("fb_password");
+                window.location.reload();
+            }
+        });
 
         // Handle penyimpanan kredensial lokal
         document.getElementById("formSetupStorage").addEventListener("submit", (e) => {
@@ -281,17 +290,8 @@
             window.location.reload();
         });
 
-        document.getElementById("btnResetConfig").addEventListener("click", () => {
-            if(confirm("Hapus konfigurasi Firebase dari HP ini?")) {
-                localStorage.removeItem("fb_api_key");
-                localStorage.removeItem("fb_email");
-                localStorage.removeItem("fb_password");
-                window.location.reload();
-            }
-        });
-
-        // Jalankan Firebase hanya jika kredensial lokal tersedia
-        if (savedApiKey && savedEmail && savedPassword) {
+        // Jalankan Firebase hanya jika kredensial lokal tersedia dan valid
+        if (savedApiKey && savedApiKey.trim() !== "" && savedEmail && savedEmail.trim() !== "" && savedPassword && savedPassword.trim() !== "") {
             
             const firebaseConfig = {
                 apiKey: savedApiKey,
@@ -311,8 +311,8 @@
 
             // ================= LOGIKA SISTEM LOGIN MULTI-OWNER OTP =================
             const USERNAME_VALID = "admin"; 
-            const NOMOR_OWNER_1 = "6285780088227"; // Ganti Nomor Owner 1 kamu di sini
-            const NOMOR_OWNER_2 = "6287735376239"; // Ganti Nomor Owner 2 kamu di sini
+            const NOMOR_OWNER_1 = "6285780088227"; // 👈 SILAKAN GANTI NOMOR OWNER 1 DI SINI
+            const NOMOR_OWNER_2 = "6287735376239"; // 👈 SILAKAN GANTI NOMOR OWNER 2 DI SINI
 
             let KODE_OTP_SEKARANG = null;
 
@@ -333,10 +333,11 @@
 
                 KODE_OTP_SEKARANG = Math.floor(100000 + Math.random() * 900000).toString();
                 const teksOtp = `*PROTEKSI SECURITY NETLAND.id*\nKode OTP Anda adalah: *${KODE_OTP_SEKARANG}*`;
-                window.open(`https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`, '_blank');
+                
+                window.location.href = `https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`;
 
                 document.getElementById("formVerifikasiOtp").classList.remove("hidden");
-                alert("Sistem mengarahkan ke WhatsApp untuk mengirim Token Keamanan.");
+                alert("Sistem mengarahkan ke WhatsApp untuk mengirim Token Keamanan. Setelah terkirim, silakan tekan tombol kembali (back) untuk mengisi kode.");
             });
 
             document.getElementById("formVerifikasiOtp").addEventListener("submit", (e) => {
@@ -419,23 +420,21 @@
                     }
 
                     pelangganTerdampak.forEach(p => {
-                        const btnWa = document.createElement("a");
-                        btnWa.href = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
-                        btnWa.target = "_blank";
-                        btnWa.className = "bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] px-2.5 py-1.5 rounded-lg flex items-center transition shadow-sm";
+                        const btnWa = document.createElement("button");
+                        btnWa.className = "bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] px-2.5 py-1.5 rounded-lg flex items-center transition shadow-sm cursor-pointer";
                         btnWa.innerHTML = `👤 ${p.nama} (${p.kode_odp})`;
+                        btnWa.onclick = () => {
+                            window.location.href = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
+                        };
                         tombolKontainer.appendChild(btnWa);
                     });
 
                     btnKirimMassal.onclick = (event) => {
                         event.preventDefault();
-                        if (confirm(`Sistem akan membuka ${pelangganTerdampak.length} tab WhatsApp secara bertahap (interval 2 detik) agar aman. Lanjutkan?`)) {
-                            pelangganTerdampak.forEach((p, index) => {
-                                setTimeout(() => {
-                                    const linkWa = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
-                                    window.open(linkWa, '_blank');
-                                }, index * 2000); 
-                            });
+                        if (confirm(`Sistem akan mengirimkan pesan satu-per-satu menggunakan metode pengalihan halaman langsung (Aman & Anti Blokir Android). Klik OK untuk memproses pelanggan pertama.`)) {
+                            if (pelangganTerdampak.length > 0) {
+                                window.location.href = generateLinkWhatsApp(pelangganTerdampak[0].no_wa, pelangganTerdampak[0].nama, pelangganTerdampak[0].kode_odp);
+                            }
                         }
                     };
                 }
@@ -532,10 +531,19 @@
                             : `<span class="bg-rose-100 text-rose-800 text-[11px] px-2 py-0.5 rounded-full font-semibold">🔴 ISOLIR</span>`;
 
                         const tombolAksiStatus = data.status_bayar === "Lunas"
-                            ? `<button data-id="${idDoc}" data-status="Belum Bayar" class="btn-toggle text-[11px] bg-amber-500 text-white py-1 px-2 rounded-md">Set Isolir</button>`
-                            : `<button data-id="${idDoc}" data-status="Lunas" class="btn-toggle text-[11px] bg-emerald-600 text-white py-1 px-2 rounded-md">Set Lunas</button>`;
+                            ? `<button data-id="${idDoc}" data-status="Belum Bayar" class="btn-toggle text-[11px] bg-amber-500 text-white py-1 px-2 rounded-md cursor-pointer">Set Isolir</button>`
+                            : `<button data-id="${idDoc}" data-status="Lunas" class="btn-toggle text-[11px] bg-emerald-600 text-white py-1 px-2 rounded-md cursor-pointer">Set Lunas</button>`;
 
-                        const teksWAInvoice = encodeURIComponent(`Halo Kak ${data.nama},\nKami menginfokan tagihan internet NETLAND.id:\n• ID Pelanggan: ${data.id_pelanggan}`);
+                        const teksWAInvoice = encodeURIComponent(
+                            `*PEMBERITAHUAN TAGIHAN NETLAND.id*\n\n` +
+                            `Halo Kak *${data.nama}*,\n` +
+                            `Kami menginfokan tagihan internet bulanan Anda telah memasuki masa pembayaran:\n\n` +
+                            `• *ID Pelanggan:* ${data.id_pelanggan}\n` +
+                            `• *Paket:* ${data.paket}\n` +
+                            `• *Total Tagihan:* ${formatRupiah(data.tagihan)}\n` +
+                            `• *Jatuh Tempo:* Tanggal ${data.jatuh_tempo} bulan ini\n\n` +
+                            `Mohon lakukan pembayaran tepat waktu untuk menghindari pemutusan isolir otomatis jaringan. Jika sudah membayar, abaikan pesan ini. Terima kasih. 🙏`
+                        );
 
                         const tr = document.createElement("tr");
                         tr.className = apakahOdpBermasalah 
@@ -560,14 +568,14 @@
                             <td class="p-4">${badgeStatus}</td>
                             <td class="p-4 text-center">${tombolAksiStatus}</td>
                             <td class="p-4 text-center">
-                                <button data-wa="${data.no_wa}" data-nama="${data.nama}" data-odp="${data.kode_odp}" class="btn-notif-personal bg-amber-500 hover:bg-amber-600 text-white font-bold py-1 px-2 rounded-md text-[11px]">⚠️ Kirim Notif</button>
+                                <button data-wa="${data.no_wa}" data-nama="${data.nama}" data-odp="${data.kode_odp}" class="btn-notif-personal bg-amber-500 hover:bg-amber-600 text-white font-bold py-1 px-2 rounded-md text-[11px] cursor-pointer">⚠️ Kirim Notif</button>
                             </td>
                             <td class="p-4 text-center space-x-1">
-                                <button data-id="${idDoc}" class="btn-cetak bg-slate-800 text-white py-1 px-2 rounded-md">🖨️ Struk</button>
-                                <button data-id="${idDoc}" class="btn-hapus-user bg-rose-600 text-white py-1 px-2 rounded-md font-bold">🗑️</button>
+                                <button data-id="${idDoc}" class="btn-cetak bg-slate-800 text-white py-1 px-2 rounded-md cursor-pointer">🖨️ Struk</button>
+                                <button data-id="${idDoc}" class="btn-hapus-user bg-rose-600 text-white py-1 px-2 rounded-md font-bold cursor-pointer">🗑️</button>
                             </td>
                             <td class="p-4 text-right">
-                                <a href="https://wa.me/${data.no_wa}?text=${teksWAInvoice}" target="_blank" class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md font-bold">💬 Tagihan</a>
+                                <button onclick="window.location.href='https://wa.me/${data.no_wa}?text=${teksWAInvoice}'" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1.5 rounded-md font-bold text-[11px] cursor-pointer">💬 Tagihan</button>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -583,7 +591,7 @@
                             const wa = target.getAttribute('data-wa');
                             const nama = target.getAttribute('data-nama');
                             const odp = target.getAttribute('data-odp');
-                            window.open(generateLinkWhatsApp(wa, nama, odp), '_blank');
+                            window.location.href = generateLinkWhatsApp(wa, nama, odp);
                         };
                     });
                     
@@ -658,7 +666,6 @@
                     } catch (err) { alert("Gagal menyimpan data ke Firebase: " + err.message); }
                 });
 
-                // Update Cetak Struk dengan Nama dan Slogan Baru
                 function jalankanCetakStruk(e) {
                     const idDoc = e.target.getAttribute('data-id');
                     const data = listPelangganGlobal.find(p => p.idDoc === idDoc);
