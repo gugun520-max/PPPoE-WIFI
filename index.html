@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NETLAND.id - Billing & Security Manager</title>
-    <!-- Ganti ke Tailwind v3 yang 100% stabil di semua Android -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -18,7 +17,6 @@
 <body class="bg-slate-100 text-slate-800 font-sans antialiased">
 
     <!-- ================= SCREEN SETUP KREDENSIAL ================= -->
-    <!-- Diubah menggunakan style="display: block" secara default agar tidak terkunci CSS Tailwind -->
     <div id="screenSetup" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50 shadow-2xl" style="display: none;">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-4">
             <div class="text-center space-y-1">
@@ -246,7 +244,6 @@
         let savedEmail = localStorage.getItem("fb_email");
         let savedPassword = localStorage.getItem("fb_password");
 
-        // Cek murni tanpa syarat ganda
         if (!savedApiKey || !savedEmail || !savedPassword) {
             boxSetup.style.setProperty("display", "flex", "important");
         }
@@ -283,8 +280,8 @@
             const odpCollection = collection(db, "daftar_odp");
 
             const USERNAME_VALID = "admin"; 
-            const NOMOR_OWNER_1 = "6285780088227"; // 👈 GANTI NOMOR OWNER 1
-            const NOMOR_OWNER_2 = "6287735376239"; // 👈 GANTI NOMOR OWNER 2
+            const NOMOR_OWNER_1 = "6281111111111"; // 👈 GANTI NOMOR OWNER 1
+            const NOMOR_OWNER_2 = "6282222222222"; // 👈 GANTI NOMOR OWNER 2
 
             let KODE_OTP_SEKARANG = null;
 
@@ -303,7 +300,6 @@
                 
                 const teksOtp = `*PROTEKSI SECURITY NETLAND.id*\nKode OTP Anda adalah: *${KODE_OTP_SEKARANG}*`;
                 
-                // Eksekusi WA Bypass Android Aman
                 window.location.href = `https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`;
 
                 document.getElementById("formVerifikasiOtp").classList.remove("hidden");
@@ -321,7 +317,12 @@
                             document.getElementById("kontenAplikasi").classList.remove("hidden");
                             jalankanAplikasiUtama();
                         })
-                        .catch((err) => { alert("Kredensial Firebase Salah: " + err.message); });
+                        .catch((err) => { 
+                            // PERBAIKAN DI SINI: Deteksi otomatis kredensial salah, langsung reset & munculkan form setup
+                            alert("Kredensial Firebase Salah atau Kedaluwarsa! Memori dibersihkan. Silakan isi ulang kredensial baru.");
+                            localStorage.clear();
+                            boxSetup.style.setProperty("display", "flex", "important");
+                        });
                 } else {
                     alert("Kode OTP salah!");
                 }
