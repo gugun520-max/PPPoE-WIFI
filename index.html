@@ -16,33 +16,6 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased">
 
-    <!-- ================= SCREEN SETUP KREDENSIAL ================= -->
-    <div id="screenSetup" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50 shadow-2xl" style="display: none;">
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-4">
-            <div class="text-center space-y-1">
-                <h1 class="text-xl font-black text-slate-900 tracking-wider">🎛️ INITIATE STORAGE</h1>
-                <p class="text-xs text-slate-500">Masukkan kredensial Firebase sekali saja di HP ini.</p>
-            </div>
-            <form id="formSetupStorage" class="space-y-3">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Firebase API Key</label>
-                    <input type="text" id="setupApiKey" placeholder="AIzaSy..." class="w-full border border-slate-200 p-2.5 rounded-xl text-xs bg-slate-50" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Email Admin Auth</label>
-                    <input type="email" id="setupEmail" placeholder="admin@billing.com" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs bg-slate-50" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Password Admin Auth</label>
-                    <input type="password" id="setupPassword" placeholder="******" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs bg-slate-50" required>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md">
-                    💾 Simpan di Memori HP Ini
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- ================= SCREEN LOGIN OTP ================= -->
     <div id="screenLogin" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-40">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-6">
@@ -85,10 +58,6 @@
                     ✅ Verifikasi & Masuk Dashboard
                 </button>
             </form>
-            
-            <div class="text-center">
-                <button id="btnResetConfig" type="button" class="text-[10px] text-slate-400 underline hover:text-rose-500 cursor-pointer">⚙️ Reset Kredensial Firebase HP Ini</button>
-            </div>
         </div>
     </div>
 
@@ -147,7 +116,6 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 <input type="text" id="nama" placeholder="Nama Pelanggan" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" required>
                                 
-                                <!-- DROPDOWN PAKET DENGAN HARGA OTOMATIS -->
                                 <select id="paket" class="border p-2.5 rounded-xl text-sm w-full bg-slate-50" required>
                                     <option value="" data-harga="0">-- Pilih Paket --</option>
                                     <option value="30 Mbps" data-harga="135000">30 Mbps</option>
@@ -250,404 +218,375 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        const boxSetup = document.getElementById("screenSetup");
+        // ================= KREDENSIAL FIXED (TERNYATA AMAN) =================
+        const FB_API_KEY = "AIzaSyBnNi699FeIvQVNg7FOZoo0nZtvYAWA5XM";
+        const FB_EMAIL = "cimanggis@gmail.com";
+        const FB_PASSWORD = "cimanggis";
 
-        let savedApiKey = localStorage.getItem("fb_api_key");
-        let savedEmail = localStorage.getItem("fb_email");
-        let savedPassword = localStorage.getItem("fb_password");
+        const firebaseConfig = {
+    apiKey: FB_API_KEY,
+    authDomain: "appkonter-d99.firebaseapp.com",
+    projectId: "appkonter-d99",
+    storageBucket: "appkonter-d99.firebasestorage.app",
+    messagingSenderId: "82453234760",
+    appId: "1:82453234760:web:fd0128c1944b7edb64447d"
+};
 
-        if (!savedApiKey || !savedEmail || !savedPassword) {
-            boxSetup.style.setProperty("display", "flex", "important");
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        const pppoeCollection = collection(db, "pelanggan_pppoe");
+        const odpCollection = collection(db, "daftar_odp");
 
-        document.getElementById("btnResetConfig").addEventListener("click", () => {
-            if(confirm("Hapus konfigurasi Firebase dari HP ini?")) {
-                localStorage.clear();
-                window.location.reload();
+        const USERNAME_VALID = "admin"; 
+        const NOMOR_OWNER_1 = "6285780088227"; 
+        const NOMOR_OWNER_2 = "6287735376239"; 
+
+        let KODE_OTP_SEKARANG = null;
+
+        document.getElementById("formRequestOtp").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const inputUser = document.getElementById("loginUsername").value.trim();
+            const targetOwner = document.getElementById("pilihanOwnerOtp").value;
+
+            if (inputUser !== USERNAME_VALID) {
+                alert("Username salah!");
+                return;
+            }
+
+            let nomorTujuanWa = targetOwner === "owner2" ? NOMOR_OWNER_2 : NOMOR_OWNER_1;
+            KODE_OTP_SEKARANG = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            const teksOtp = `*PROTEKSI SECURITY NETLAND.id*\nKode OTP Anda adalah: *${KODE_OTP_SEKARANG}*`;
+            
+            window.location.href = `https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`;
+            document.getElementById("formVerifikasiOtp").classList.remove("hidden");
+            alert("Membuka WhatsApp untuk mengirim token. Setelah terkirim, kembali ke sini untuk memasukkan kode.");
+        });
+
+        document.getElementById("formVerifikasiOtp").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const inputOtp = document.getElementById("inputOtpCode").value.trim();
+
+            if (inputOtp === KODE_OTP_SEKARANG && KODE_OTP_SEKARANG !== null) {
+                signInWithEmailAndPassword(auth, FB_EMAIL, FB_PASSWORD)
+                    .then(() => {
+                        document.getElementById("screenLogin").classList.add("hidden");
+                        document.getElementById("kontenAplikasi").classList.remove("hidden");
+                        jalankanAplikasiUtama();
+                    })
+                    .catch((err) => { 
+                        alert("Gagal terhubung ke Firebase. Periksa kembali isi API Key, Email, atau Password di dalam script.");
+                    });
+            } else {
+                alert("Kode OTP salah!");
             }
         });
 
-        document.getElementById("formSetupStorage").addEventListener("submit", (e) => {
-            e.preventDefault();
-            localStorage.setItem("fb_api_key", document.getElementById("setupApiKey").value.trim());
-            localStorage.setItem("fb_email", document.getElementById("setupEmail").value.trim());
-            localStorage.setItem("fb_password", document.getElementById("setupPassword").value.trim());
-            alert("Kredensial disimpan!");
-            window.location.reload();
+        document.getElementById("btnLogout").addEventListener("click", () => {
+            signOut(auth).then(() => { window.location.reload(); });
         });
 
-        if (savedApiKey && savedEmail && savedPassword) {
-            const firebaseConfig = {
-                apiKey: savedApiKey,
-                authDomain: "billing-wifi.firebaseapp.com",
-                projectId: "billing-wifi",
-                storageBucket: "billing-wifi.appspot.com"
-            };
+        function jalankanAplikasiUtama() {
+            const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(angka);
+            let listPelangganGlobal = []; 
+            let statusOdpGlobal = {}; 
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            
-            const pppoeCollection = collection(db, "pelanggan_pppoe");
-            const odpCollection = collection(db, "daftar_odp");
+            document.getElementById("paket").addEventListener("change", (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const hargaOtomatis = selectedOption.getAttribute("data-harga");
+                const inputTagihan = document.getElementById("tagihan");
+                
+                if (hargaOtomatis && hargaOtomatis !== "0") {
+                    inputTagihan.value = hargaOtomatis;
+                } else {
+                    inputTagihan.value = "";
+                }
+            });
 
-            const USERNAME_VALID = "admin"; 
-            const NOMOR_OWNER_1 = "6285780088227"; 
-            const NOMOR_OWNER_2 = "6287735376239"; 
+            const areaTeksInput = document.getElementById("inputTemplatePesan");
+            areaTeksInput.value = localStorage.getItem("draft_pesan_gangguan") || "Selamat pagi/siang/malam, Bapak/Ibu Pelanggan Setia NETLAND.id.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur ODP [odp] demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan penurunan layanan atau pemutusan koneksi sementara waktu pada perangkat pelanggan di area terdampak. Estimasi perbaikan diupayakan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id";
 
-            let KODE_OTP_SEKARANG = null;
+            areaTeksInput.addEventListener("input", () => {
+                localStorage.setItem("draft_pesan_gangguan", areaTeksInput.value);
+                perbaruiPanelNotifikasiMassal(); 
+            });
 
-            document.getElementById("formRequestOtp").addEventListener("submit", (e) => {
-                e.preventDefault();
-                const inputUser = document.getElementById("loginUsername").value.trim();
-                const targetOwner = document.getElementById("pilihanOwnerOtp").value;
+            function generateLinkWhatsApp(noWa, namaPelanggan, kodeOdp) {
+                let teksJadi = areaTeksInput.value.replace(/\[nama\]/g, namaPelanggan).replace(/\[odp\]/g, kodeOdp);
+                return `https://wa.me/${noWa}?text=${encodeURIComponent(teksJadi)}`;
+            }
 
-                if (inputUser !== USERNAME_VALID) {
-                    alert("Username salah!");
+            document.getElementById("btnKirimMassal").addEventListener("click", async () => {
+                const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
+                const terdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
+                
+                if(terdampak.length === 0) return alert("Tidak ada pelanggan yang terdampak.");
+                
+                if(confirm(`Sistem akan membantu Anda membuka tab WhatsApp berurutan untuk ${terdampak.length} pelanggan. Izinkan pop-up jika diminta browser Anda. Lanjutkan?`)) {
+                    for (let i = 0; i < terdampak.length; i++) {
+                        const p = terdampak[i];
+                        const url = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
+                        const w = window.open(url, '_blank');
+                        
+                        if(!w) {
+                            alert("Pengiriman terhenti karena pop-up browser terblokir. Harap izinkan pop-up pada pengaturan browser Anda.");
+                            break;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 2500)); 
+                    }
+                }
+            });
+
+            document.getElementById("inputCariPelanggan").addEventListener("input", () => renderTabelPelanggan(listPelangganGlobal));
+
+            function perbaruiPanelNotifikasiMassal() {
+                const areaNotif = document.getElementById("areaNotifMassal");
+                const tombolKontainer = document.getElementById("tombolNotifKontainer");
+                const teksInfo = document.getElementById("teksInfoTerdampak");
+                const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
+
+                if (odpSedangMaint.length === 0) {
+                    areaNotif.classList.add("hidden");
                     return;
                 }
 
-                let nomorTujuanWa = targetOwner === "owner2" ? NOMOR_OWNER_2 : NOMOR_OWNER_1;
-                KODE_OTP_SEKARANG = Math.floor(100000 + Math.random() * 900000).toString();
-                
-                const teksOtp = `*PROTEKSI SECURITY NETLAND.id*\nKode OTP Anda adalah: *${KODE_OTP_SEKARANG}*`;
-                
-                window.location.href = `https://wa.me/${nomorTujuanWa}?text=${encodeURIComponent(teksOtp)}`;
-                document.getElementById("formVerifikasiOtp").classList.remove("hidden");
-                alert("Membuka WhatsApp untuk mengirim token. Setelah terkirim, silakan kembali ke halaman ini untuk memasukkan kode.");
-            });
+                areaNotif.classList.remove("hidden");
+                tombolKontainer.innerHTML = "";
+                const pelangganTerdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
+                teksInfo.innerText = `Jalur ${odpSedangMaint.join(', ')} GANGGUAN. Total: ${pelangganTerdampak.length} rumah terdampak.`;
 
-            document.getElementById("formVerifikasiOtp").addEventListener("submit", (e) => {
-                e.preventDefault();
-                const inputOtp = document.getElementById("inputOtpCode").value.trim();
-
-                if (inputOtp === KODE_OTP_SEKARANG && KODE_OTP_SEKARANG !== null) {
-                    signInWithEmailAndPassword(auth, savedEmail, savedPassword)
-                        .then(() => {
-                            document.getElementById("screenLogin").classList.add("hidden");
-                            document.getElementById("kontenAplikasi").classList.remove("hidden");
-                            jalankanAplikasiUtama();
-                        })
-                        .catch((err) => { 
-                            alert("Kredensial Firebase Salah atau Kedaluwarsa! Memori dibersihkan.");
-                            localStorage.clear();
-                            boxSetup.style.setProperty("display", "flex", "important");
-                        });
-                } else {
-                    alert("Kode OTP salah!");
-                }
-            });
-
-            document.getElementById("btnLogout").addEventListener("click", () => {
-                signOut(auth).then(() => { window.location.reload(); });
-            });
-
-            function jalankanAplikasiUtama() {
-                const formatRupiah = (angka) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(angka);
-                let listPelangganGlobal = []; 
-                let statusOdpGlobal = {}; 
-
-                // LOGIKA OTOMATIS HARGA PAKET DROPDOWN
-                document.getElementById("paket").addEventListener("change", (e) => {
-                    const selectedOption = e.target.options[e.target.selectedIndex];
-                    const hargaOtomatis = selectedOption.getAttribute("data-harga");
-                    const inputTagihan = document.getElementById("tagihan");
-                    
-                    if (hargaOtomatis && hargaOtomatis !== "0") {
-                        inputTagihan.value = hargaOtomatis;
-                    } else {
-                        inputTagihan.value = "";
-                    }
-                });
-
-                // REDAKSI BARU: NOTIFIKASI GANGGUAN MASSAL (SOPAN & PANJANG)
-                const areaTeksInput = document.getElementById("inputTemplatePesan");
-                areaTeksInput.value = localStorage.getItem("draft_pesan_gangguan") || "Selamat pagi/siang/malam, Bapak/Ibu Pelanggan Setia NETLAND.id.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur ODP [odp] demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan penurunan layanan atau pemutusan koneksi sementara waktu pada perangkat pelanggan di area terdampak. Estimasi perbaikan diupayakan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id";
-
-                areaTeksInput.addEventListener("input", () => {
-                    localStorage.setItem("draft_pesan_gangguan", areaTeksInput.value);
-                    perbaruiPanelNotifikasiMassal(); 
-                });
-
-                function generateLinkWhatsApp(noWa, namaPelanggan, kodeOdp) {
-                    let teksJadi = areaTeksInput.value.replace(/\[nama\]/g, namaPelanggan).replace(/\[odp\]/g, kodeOdp);
-                    return `https://wa.me/${noWa}?text=${encodeURIComponent(teksJadi)}`;
-                }
-
-                // BROADCAST MASSAL AMAN (ANTREAN MANUAL TERKONTROL)
-                document.getElementById("btnKirimMassal").addEventListener("click", async () => {
-                    const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
-                    const terdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
-                    
-                    if(terdampak.length === 0) return alert("Tidak ada pelanggan yang terdampak.");
-                    
-                    if(confirm(`Sistem akan membantu Anda membuka tab WhatsApp berurutan untuk ${terdampak.length} pelanggan. Izinkan pop-up jika diminta browser Anda. Lanjutkan?`)) {
-                        for (let i = 0; i < terdampak.length; i++) {
-                            const p = terdampak[i];
-                            const url = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
-                            const w = window.open(url, '_blank');
-                            
-                            if(!w) {
-                                alert("Pengiriman terhenti karena pop-up browser terblokir. Harap izinkan pop-up pada pengaturan browser Anda.");
-                                break;
-                            }
-                            await new Promise(resolve => setTimeout(resolve, 2500)); 
-                        }
-                    }
-                });
-
-                document.getElementById("inputCariPelanggan").addEventListener("input", () => renderTabelPelanggan(listPelangganGlobal));
-
-                function perbaruiPanelNotifikasiMassal() {
-                    const areaNotif = document.getElementById("areaNotifMassal");
-                    const tombolKontainer = document.getElementById("tombolNotifKontainer");
-                    const teksInfo = document.getElementById("teksInfoTerdampak");
-                    const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
-
-                    if (odpSedangMaint.length === 0) {
-                        areaNotif.classList.add("hidden");
-                        return;
-                    }
-
-                    areaNotif.classList.remove("hidden");
-                    tombolKontainer.innerHTML = "";
-                    const pelangganTerdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
-                    teksInfo.innerText = `Jalur ${odpSedangMaint.join(', ')} GANGGUAN. Total: ${pelangganTerdampak.length} rumah terdampak.`;
-
-                    pelangganTerdampak.forEach(p => {
-                        const btnWa = document.createElement("button");
-                        btnWa.className = "bg-amber-600 hover:bg-amber-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg transition";
-                        btnWa.innerText = `👤 ${p.nama} (${p.kode_odp})`;
-                        btnWa.onclick = () => window.open(generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp), '_blank');
-                        tombolKontainer.appendChild(btnWa);
-                    });
-                }
-
-                function hitungStatistik(data) {
-                    let totalPendapatan = 0;
-                    let totalLunas = 0;
-                    let totalTunggakan = 0;
-
-                    data.forEach(p => {
-                        if(p.status_bayar === "Lunas") {
-                            totalPendapatan += Number(p.tagihan || 0);
-                            totalLunas++;
-                        } else {
-                            totalTunggakan++;
-                        }
-                    });
-
-                    document.getElementById("statTotalPendapatan").innerText = formatRupiah(totalPendapatan);
-                    document.getElementById("statLunas").innerText = `${totalLunas} Pelanggan`;
-                    document.getElementById("statTunggakan").innerText = `${totalTunggakan} Pelanggan`;
-                }
-
-                onSnapshot(odpCollection, (snapshot) => {
-                    const selectOdp = document.getElementById("pilihan_odp");
-                    const listOdpHapus = document.getElementById("listOdpHapus");
-                    selectOdp.innerHTML = '<option value="">-- Pilih Kotak ODP --</option>';
-                    listOdpHapus.innerHTML = '';
-                    statusOdpGlobal = {}; 
-                    
-                    snapshot.forEach((docSnap) => {
-                        const idOdp = docSnap.id;
-                        const dataOdp = docSnap.data();
-                        statusOdpGlobal[dataOdp.nama_odp] = dataOdp.is_maintenance || false;
-
-                        const option = document.createElement("option");
-                        option.value = dataOdp.nama_odp;
-                        option.innerText = `${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '(⚠️ Mt)' : ''}`;
-                        selectOdp.appendChild(option);
-
-                        const div = document.createElement("div");
-                        div.className = "p-2 rounded-xl border bg-slate-50 flex justify-between items-center text-[11px]";
-                        div.innerHTML = `
-                            <span class="font-bold">${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '⚠️' : '🟢'}</span>
-                            <div class="flex gap-1">
-                                <button data-id="${idOdp}" data-status="${dataOdp.is_maintenance || false}" class="btn-toggle-mt bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px]">Toggle</button>
-                                <button data-id="${idOdp}" class="btn-hapus-odp bg-rose-600 text-white px-1 py-0.5 rounded text-[10px]">🗑️</button>
-                            </div>
-                        `;
-                        listOdpHapus.appendChild(div);
-                    });
-
-                    document.querySelectorAll('.btn-toggle-mt').forEach(b => b.addEventListener('click', async (e) => {
-                        const id = e.target.getAttribute('data-id');
-                        const st = e.target.getAttribute('data-status') === 'true';
-                        await updateDoc(doc(db, "daftar_odp", id), { is_maintenance: !st });
-                    }));
-
-                    document.querySelectorAll('.btn-hapus-odp').forEach(b => b.addEventListener('click', async (e) => {
-                        if(confirm("Hapus ODP ini dari Master database?")) {
-                            await deleteDoc(doc(db, "daftar_odp", e.target.getAttribute('data-id')));
-                        }
-                    }));
-                });
-
-                onSnapshot(pppoeCollection, (snapshot) => {
-                    listPelangganGlobal = []; 
-                    snapshot.forEach((ds) => { listPelangganGlobal.push({ idDoc: ds.id, ...ds.data() }); });
-                    hitungStatistik(listPelangganGlobal);
-                    renderTabelPelanggan(listPelangganGlobal);
-                });
-
-                function renderTabelPelanggan(dataArray) {
-                    const tbody = document.getElementById("tabelBody");
-                    const keyword = document.getElementById("inputCariPelanggan").value.toLowerCase().trim();
-                    tbody.innerHTML = "";
-
-                    const filtered = dataArray.filter(p => 
-                        p.nama?.toLowerCase().includes(keyword) || 
-                        p.id_pelanggan?.toLowerCase().includes(keyword) ||
-                        p.id_tagihan?.toLowerCase().includes(keyword) ||
-                        p.kode_odp?.toLowerCase().includes(keyword) ||
-                        p.no_wa?.includes(keyword)
-                    );
-                    document.getElementById("statusTotalPencarian").innerText = `Total Terfilter: ${filtered.length} data.`;
-
-                    if(filtered.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400">Tidak ada data pelanggan cocok.</td></tr>`;
-                        return;
-                    }
-
-                    filtered.forEach((data) => {
-                        const isLunas = data.status_bayar === 'Lunas';
-                        const tr = document.createElement("tr");
-                        tr.className = isLunas ? "bg-white" : "bg-rose-50/40";
-                        
-                        tr.innerHTML = `
-                            <td class="p-4 font-mono text-xs">
-                                <span class="font-bold text-slate-900">${data.id_pelanggan}</span><br>
-                                <span class="text-[10px] text-slate-400">${data.id_tagihan}</span>
-                            </td>
-                            <td class="p-4 font-bold text-slate-900">${data.nama}</td>
-                            <td class="p-4 font-mono uppercase text-xs">${data.kode_odp || '-'} <span class="text-blue-600 font-bold">[P:${data.port_odp || '-'}]</span></td>
-                            <td class="p-4 text-xs font-medium">${data.paket}<br><span class="text-slate-500">${formatRupiah(data.tagihan)}</span></td>
-                            <td class="p-4 text-center font-bold text-xs">Tgl ${data.jatuh_tempo || '-'}</td>
-                            <td class="p-4">
-                                <span class="px-2 py-0.5 rounded-full text-[11px] font-black ${isLunas ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                                    ${data.status_bayar}
-                                </span>
-                            </td>
-                            <td class="p-4 text-center">
-                                <button data-id="${data.idDoc}" data-status="${isLunas ? 'Belum Bayar' : 'Lunas'}" class="btn-toggle text-xs font-bold ${isLunas ? 'bg-slate-600' : 'bg-emerald-600'} text-white px-2 py-1 rounded-xl shadow-sm">
-                                    ${isLunas ? 'Set Unpaid' : '💳 Set Lunas'}
-                                </button>
-                            </td>
-                            <td class="p-4 text-center">
-                                <button class="btn-isolir text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-xl block w-full mb-1" data-wa="${data.no_wa}" data-nama="${data.nama}" data-inv="${data.id_tagihan}" data-tagihan="${data.tagihan}">
-                                    ⚠️ Isolir/Notif
-                                </button>
-                                <button class="btn-notif-mt-indiv text-xs font-bold bg-amber-600 text-white px-2.5 py-1 rounded-xl block w-full" data-wa="${data.no_wa}" data-nama="${data.nama}" data-odp="${data.kode_odp || '-'}">
-                                    📢 Info Mt
-                                </button>
-                            </td>
-                            <td class="p-4 text-center">
-                                <button class="btn-test-print btn-cetak bg-slate-200 hover:bg-slate-300 text-slate-800 px-2 py-1 rounded-xl text-xs font-bold" data-id="${data.idDoc}">
-                                    🖨️ Struk
-                                </button>
-                            </td>
-                            <td class="p-4 text-center">
-                                <button data-id="${data.idDoc}" class="btn-hapus-user bg-rose-100 hover:bg-rose-200 text-rose-600 p-1.5 rounded-xl transition">🗑️</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    document.querySelectorAll('.btn-toggle').forEach(b => b.addEventListener('click', async (e) => {
-                        await updateDoc(doc(db, "pelanggan_pppoe", e.target.getAttribute('data-id')), { status_bayar: e.target.getAttribute('data-status') });
-                    }));
-
-                    document.querySelectorAll('.btn-hapus-user').forEach(b => b.addEventListener('click', async (e) => {
-                        if(confirm("Hapus seluruh data pelanggan ini secara permanen dari Cloud?")) {
-                            await deleteDoc(doc(db, "pelanggan_pppoe", e.target.closest('button').getAttribute('data-id')));
-                        }
-                    }));
-
-                    // CETAK STRUK THERMAL 80mm
-                    document.querySelectorAll('.btn-cetak').forEach(b => b.addEventListener('click', (e) => {
-                        const targetId = e.target.getAttribute('data-id');
-                        const p = listPelangganGlobal.find(item => item.idDoc === targetId);
-                        if(!p) return;
-
-                        const areaStruk = document.getElementById("areaCetakStruk");
-                        areaStruk.innerHTML = `
-                            <div style="text-align:center; font-weight:bold; font-size:14px;">🌐 NETLAND.id</div>
-                            <div style="text-align:center; margin-bottom:10px;">Bukti Pembayaran Internet Sah</div>
-                            <hr style="border-top:1px dashed #000;">
-                            <p>No. Invoice : ${p.id_tagihan}</p>
-                            <p>ID Player   : ${p.id_pelanggan}</p>
-                            <p>Nama        : ${p.nama}</p>
-                            <p>Paket Line  : ${p.paket}</p>
-                            <p>ODP Jalur   : ${p.kode_odp} / Port:${p.port_odp}</p>
-                            <hr style="border-top:1px dashed #000;">
-                            <p style="font-size:13px; font-weight:bold;">TOTAL BAYAR: ${formatRupiah(p.tagihan)}</p>
-                            <p>Status      : LUNAS (Paid)</p>
-                            <p>Tanggal     : ${new Date().toLocaleDateString('id-ID')}</p>
-                            <hr style="border-top:1px dashed #000;">
-                            <div style="text-align:center; margin-top:10px;">Terima Kasih Atas Kepercayaan Anda!</div>
-                        `;
-                        window.print();
-                    }));
-
-                    // NOTIFIKASI JATUH TEMPO / REMINDER ISOLIR + METODE BAYAR BARU
-                    document.querySelectorAll('.btn-isolir').forEach(b => b.addEventListener('click', (e) => {
-                        const btn = e.target;
-                        const wa = btn.getAttribute('data-wa');
-                        const nama = btn.getAttribute('data-nama');
-                        const inv = btn.getAttribute('data-inv');
-                        const tag = formatRupiah(btn.getAttribute('data-tagihan'));
-                        
-                        const teksIsolir = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu. Melalui pesan resmi ini, kami dari bagian administrasi NETLAND.id ingin menginformasikan mengenai layanan internet aktif Anda dengan nomor Invoice *${inv}*.\n\nKami mencatat bahwa masa aktif paket internet Anda telah memasuki/melewati tanggal jatuh tempo pembayaran dengan total tagihan sebesar *${tag}*.\n\nAgar kenyamanan aktivitas digital Anda dan keluarga di rumah tetap terjaga tanpa adanya kendala pemutusan (isolir) sistem otomatis, kami memohon kesediaan Bapak/Ibu untuk melakukan pembaruan pembayaran sebelum sistem melakukan penonaktifan akses PPPoE sementara.\n\nBerikut rincian metode pembayaran resmi kami:\n💵 Pembayaran cash dapat menghubungi 👤 Mang Dayat : 085710857846\n\n🏦 Pembayaran Transfer :\nBANK BCA : 5290262188\nAtas nama : Muhamad Ridwan Arif\n\nJika Bapak/Ibu sudah melakukan pembayaran atau membutuhkan bantuan/konfirmasi lebih lanjut mengenai detail tagihan, silakan abaikan pesan ini atau hubungi tim support kami dengan melampirkan bukti transfer.\n\nTerima Kasih banyak atas perhatian, loyalitas, dan kerja sama yang terjalin dengan baik.\n\nHormat kami,\nBilling Management NETLAND.id`;
-                        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksIsolir)}`, '_blank');
-                    }));
-
-                    // NOTIFIKASI GANGGUAN / MAINTENANCE INDIVIDUAL
-                    document.querySelectorAll('.btn-notif-mt-indiv').forEach(b => b.addEventListener('click', (e) => {
-                        const btn = e.target;
-                        const wa = btn.getAttribute('data-wa');
-                        const nama = btn.getAttribute('data-nama');
-                        const odp = btn.getAttribute('data-odp');
-                        
-                        const teksMtIndiv = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur koneksi ODP *${odp}* demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan pemutusan akses internet sementara waktu pada perangkat di rumah Anda. Tim teknisi lapangan kami sedang mengupayakan estimasi perbaikan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih banyak atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id`;
-                        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksMtIndiv)}`, '_blank');
-                    }));
-
-                    perbaruiPanelNotifikasiMassal();
-                }
-
-                document.getElementById("formTambahODP").addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    await addDoc(odpCollection, { nama_odp: document.getElementById("nama_odp_baru").value.trim().toUpperCase(), is_maintenance: false });
-                    document.getElementById("formTambahODP").reset();
-                });
-
-                document.getElementById("formPelanggan").addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    
-                    let no_wa = document.getElementById("no_wa").value.trim().replace(/[^0-9]/g, '');
-                    if (no_wa.startsWith("0")) no_wa = "62" + no_wa.substring(1);
-                    
-                    const tglTempo = Number(document.getElementById("jatuh_tempo").value);
-                    if(tglTempo < 1 || tglTempo > 31) return alert("Tanggal jatuh tempo wajib di antara rentang 1-31!");
-
-                    const idOto = "NET-" + Math.floor(1000 + Math.random() * 9000);
-                    
-                    await addDoc(pppoeCollection, {
-                        id_pelanggan: idOto, id_tagihan: "INV-" + idOto,
-                        nama: document.getElementById("nama").value.trim(),
-                        paket: document.getElementById("paket").value,
-                        tagihan: Number(document.getElementById("tagihan").value),
-                        jatuh_tempo: tglTempo,
-                        no_wa: no_wa, 
-                        kode_odp: document.getElementById("pilihan_odp").value,
-                        port_odp: document.getElementById("port_odp").value, 
-                        status_bayar: "Belum Bayar"
-                    });
-                    document.getElementById("formPelanggan").reset();
-                    alert("Pelanggan baru berhasil didaftarkan ke cloud database!");
+                pelangganTerdampak.forEach(p => {
+                    const btnWa = document.createElement("button");
+                    btnWa.className = "bg-amber-600 hover:bg-amber-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg transition";
+                    btnWa.innerText = `👤 ${p.nama} (${p.kode_odp})`;
+                    btnWa.onclick = () => window.open(generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp), '_blank');
+                    tombolKontainer.appendChild(btnWa);
                 });
             }
+
+            function hitungStatistik(data) {
+                let totalPendapatan = 0;
+                let totalLunas = 0;
+                let totalTunggakan = 0;
+
+                data.forEach(p => {
+                    if(p.status_bayar === "Lunas") {
+                        totalPendapatan += Number(p.tagihan || 0);
+                        totalLunas++;
+                    } else {
+                        totalTunggakan++;
+                    }
+                });
+
+                document.getElementById("statTotalPendapatan").innerText = formatRupiah(totalPendapatan);
+                document.getElementById("statLunas").innerText = `${totalLunas} Pelanggan`;
+                document.getElementById("statTunggakan").innerText = `${totalTunggakan} Pelanggan`;
+            }
+
+            onSnapshot(odpCollection, (snapshot) => {
+                const selectOdp = document.getElementById("pilihan_odp");
+                const listOdpHapus = document.getElementById("listOdpHapus");
+                selectOdp.innerHTML = '<option value="">-- Pilih Kotak ODP --</option>';
+                listOdpHapus.innerHTML = '';
+                statusOdpGlobal = {}; 
+                
+                snapshot.forEach((docSnap) => {
+                    const idOdp = docSnap.id;
+                    const dataOdp = docSnap.data();
+                    statusOdpGlobal[dataOdp.nama_odp] = dataOdp.is_maintenance || false;
+
+                    const option = document.createElement("option");
+                    option.value = dataOdp.nama_odp;
+                    option.innerText = `${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '(⚠️ Mt)' : ''}`;
+                    selectOdp.appendChild(option);
+
+                    const div = document.createElement("div");
+                    div.className = "p-2 rounded-xl border bg-slate-50 flex justify-between items-center text-[11px]";
+                    div.innerHTML = `
+                        <span class="font-bold">${dataOdp.nama_odp} ${dataOdp.is_maintenance ? '⚠️' : '🟢'}</span>
+                        <div class="flex gap-1">
+                            <button data-id="${idOdp}" data-status="${dataOdp.is_maintenance || false}" class="btn-toggle-mt bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px]">Toggle</button>
+                            <button data-id="${idOdp}" class="btn-hapus-odp bg-rose-600 text-white px-1 py-0.5 rounded text-[10px]">🗑️</button>
+                        </div>
+                    `;
+                    listOdpHapus.appendChild(div);
+                });
+
+                document.querySelectorAll('.btn-toggle-mt').forEach(b => b.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const st = e.target.getAttribute('data-status') === 'true';
+                    await updateDoc(doc(db, "daftar_odp", id), { is_maintenance: !st });
+                }));
+
+                document.querySelectorAll('.btn-hapus-odp').forEach(b => b.addEventListener('click', async (e) => {
+                    if(confirm("Hapus ODP ini dari Master database?")) {
+                        await deleteDoc(doc(db, "daftar_odp", e.target.getAttribute('data-id')));
+                    }
+                }));
+            });
+
+            onSnapshot(pppoeCollection, (snapshot) => {
+                listPelangganGlobal = []; 
+                snapshot.forEach((ds) => { listPelangganGlobal.push({ idDoc: ds.id, ...ds.data() }); });
+                hitungStatistik(listPelangganGlobal);
+                renderTabelPelanggan(listPelangganGlobal);
+            });
+
+            function renderTabelPelanggan(dataArray) {
+                const tbody = document.getElementById("tabelBody");
+                const keyword = document.getElementById("inputCariPelanggan").value.toLowerCase().trim();
+                tbody.innerHTML = "";
+
+                const filtered = dataArray.filter(p => 
+                    p.nama?.toLowerCase().includes(keyword) || 
+                    p.id_pelanggan?.toLowerCase().includes(keyword) ||
+                    p.id_tagihan?.toLowerCase().includes(keyword) ||
+                    p.kode_odp?.toLowerCase().includes(keyword) ||
+                    p.no_wa?.includes(keyword)
+                );
+                document.getElementById("statusTotalPencarian").innerText = `Total Terfilter: ${filtered.length} data.`;
+
+                if(filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400">Tidak ada data pelanggan cocok.</td></tr>`;
+                    return;
+                }
+
+                filtered.forEach((data) => {
+                    const isLunas = data.status_bayar === 'Lunas';
+                    const tr = document.createElement("tr");
+                    tr.className = isLunas ? "bg-white" : "bg-rose-50/40";
+                    
+                    tr.innerHTML = `
+                        <td class="p-4 font-mono text-xs">
+                            <span class="font-bold text-slate-900">${data.id_pelanggan}</span><br>
+                            <span class="text-[10px] text-slate-400">${data.id_tagihan}</span>
+                        </td>
+                        <td class="p-4 font-bold text-slate-900">${data.nama}</td>
+                        <td class="p-4 font-mono uppercase text-xs">${data.kode_odp || '-'} <span class="text-blue-600 font-bold">[P:${data.port_odp || '-'}]</span></td>
+                        <td class="p-4 text-xs font-medium">${data.paket}<br><span class="text-slate-500">${formatRupiah(data.tagihan)}</span></td>
+                        <td class="p-4 text-center font-bold text-xs">Tgl ${data.jatuh_tempo || '-'}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-black ${isLunas ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                ${data.status_bayar}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button data-id="${data.idDoc}" data-status="${isLunas ? 'Belum Bayar' : 'Lunas'}" class="btn-toggle text-xs font-bold ${isLunas ? 'bg-slate-600' : 'bg-emerald-600'} text-white px-2 py-1 rounded-xl shadow-sm">
+                                ${isLunas ? 'Set Unpaid' : '💳 Set Lunas'}
+                            </button>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button class="btn-isolir text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-xl block w-full mb-1" data-wa="${data.no_wa}" data-nama="${data.nama}" data-inv="${data.id_tagihan}" data-tagihan="${data.tagihan}">
+                                ⚠️ Isolir/Notif
+                            </button>
+                            <button class="btn-notif-mt-indiv text-xs font-bold bg-amber-600 text-white px-2.5 py-1 rounded-xl block w-full" data-wa="${data.no_wa}" data-nama="${data.nama}" data-odp="${data.kode_odp || '-'}">
+                                📢 Info Mt
+                            </button>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button class="btn-test-print btn-cetak bg-slate-200 hover:bg-slate-300 text-slate-800 px-2 py-1 rounded-xl text-xs font-bold" data-id="${data.idDoc}">
+                                🖨️ Struk
+                            </button>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button data-id="${data.idDoc}" class="btn-hapus-user bg-rose-100 hover:bg-rose-200 text-rose-600 p-1.5 rounded-xl transition">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.querySelectorAll('.btn-toggle').forEach(b => b.addEventListener('click', async (e) => {
+                    await updateDoc(doc(db, "pelanggan_pppoe", e.target.getAttribute('data-id')), { status_bayar: e.target.getAttribute('data-status') });
+                }));
+
+                document.querySelectorAll('.btn-hapus-user').forEach(b => b.addEventListener('click', async (e) => {
+                    if(confirm("Hapus seluruh data pelanggan ini secara permanen dari Cloud?")) {
+                        await deleteDoc(doc(db, "pelanggan_pppoe", e.target.closest('button').getAttribute('data-id')));
+                    }
+                }));
+
+                document.querySelectorAll('.btn-cetak').forEach(b => b.addEventListener('click', (e) => {
+                    const targetId = e.target.getAttribute('data-id');
+                    const p = listPelangganGlobal.find(item => item.idDoc === targetId);
+                    if(!p) return;
+
+                    const areaStruk = document.getElementById("areaCetakStruk");
+                    areaStruk.innerHTML = `
+                        <div style="text-align:center; font-weight:bold; font-size:14px;">🌐 NETLAND.id</div>
+                        <div style="text-align:center; margin-bottom:10px;">Bukti Pembayaran Internet Sah</div>
+                        <hr style="border-top:1px dashed #000;">
+                        <p>No. Invoice : ${p.id_tagihan}</p>
+                        <p>ID Player   : ${p.id_pelanggan}</p>
+                        <p>Nama        : ${p.nama}</p>
+                        <p>Paket Line  : ${p.paket}</p>
+                        <p>ODP Jalur   : ${p.kode_odp} / Port:${p.port_odp}</p>
+                        <hr style="border-top:1px dashed #000;">
+                        <p style="font-size:13px; font-weight:bold;">TOTAL BAYAR: ${formatRupiah(p.tagihan)}</p>
+                        <p>Status      : LUNAS (Paid)</p>
+                        <p>Tanggal     : ${new Date().toLocaleDateString('id-ID')}</p>
+                        <hr style="border-top:1px dashed #000;">
+                        <div style="text-align:center; margin-top:10px;">Terima Kasih Atas Kepercayaan Anda!</div>
+                    `;
+                    window.print();
+                }));
+
+                document.querySelectorAll('.btn-isolir').forEach(b => b.addEventListener('click', (e) => {
+                    const btn = e.target;
+                    const wa = btn.getAttribute('data-wa');
+                    const nama = btn.getAttribute('data-nama');
+                    const inv = btn.getAttribute('data-inv');
+                    const tag = formatRupiah(btn.getAttribute('data-tagihan'));
+                    
+                    const teksIsolir = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu. Melalui pesan resmi ini, kami dari bagian administrasi NETLAND.id ingin menginformasikan mengenai layanan internet aktif Anda dengan nomor Invoice *${inv}*.\n\nKami mencatat bahwa masa aktif paket internet Anda telah memasuki/melewati tanggal jatuh tempo pembayaran dengan total tagihan sebesar *${tag}*.\n\nAgar kenyamanan aktivitas digital Anda dan keluarga di rumah tetap terjaga tanpa adanya kendala pemutusan (isolir) sistem otomatis, kami memohon kesediaan Bapak/Ibu untuk melakukan pembaruan pembayaran sebelum sistem melakukan penonaktifan akses PPPoE sementara.\n\nBerikut rincian metode pembayaran resmi kami:\n💵 Pembayaran cash dapat menghubungi 👤 Mang Dayat : 085710857846\n\n🏦 Pembayaran Transfer :\nBANK BCA : 5290262188\nAtas nama : Muhamad Ridwan Arif\n\nJika Bapak/Ibu sudah melakukan pembayaran atau membutuhkan bantuan/konfirmasi lebih lanjut mengenai detail tagihan, silakan abaikan pesan ini atau hubungi tim support kami dengan melampirkan bukti transfer.\n\nTerima Kasih banyak atas perhatian, loyalitas, dan kerja sama yang terjalin dengan baik.\n\nHormat kami,\nBilling Management NETLAND.id`;
+                    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksIsolir)}`, '_blank');
+                }));
+
+                document.querySelectorAll('.btn-notif-mt-indiv').forEach(b => b.addEventListener('click', (e) => {
+                    const btn = e.target;
+                    const wa = btn.getAttribute('data-wa');
+                    const nama = btn.getAttribute('data-nama');
+                    const odp = btn.getAttribute('data-odp');
+                    
+                    const teksMtIndiv = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur koneksi ODP *${odp}* demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan pemutusan akses internet sementara waktu pada perangkat di rumah Anda. Tim teknisi lapangan kami sedang mengupayakan estimasi perbaikan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih banyak atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id`;
+                    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksMtIndiv)}`, '_blank');
+                }));
+
+                perbaruiPanelNotifikasiMassal();
+            }
+
+            document.getElementById("formTambahODP").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                await addDoc(odpCollection, { nama_odp: document.getElementById("nama_odp_baru").value.trim().toUpperCase(), is_maintenance: false });
+                document.getElementById("formTambahODP").reset();
+            });
+
+            document.getElementById("formPelanggan").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                
+                let no_wa = document.getElementById("no_wa").value.trim().replace(/[^0-9]/g, '');
+                if (no_wa.startsWith("0")) no_wa = "62" + no_wa.substring(1);
+                
+                const tglTempo = Number(document.getElementById("jatuh_tempo").value);
+                if(tglTempo < 1 || tglTempo > 31) return alert("Tanggal jatuh tempo wajib di antara rentang 1-31!");
+
+                const idOto = "NET-" + Math.floor(1000 + Math.random() * 9000);
+                
+                await addDoc(pppoeCollection, {
+                    id_pelanggan: idOto, id_tagihan: "INV-" + idOto,
+                    nama: document.getElementById("nama").value.trim(),
+                    paket: document.getElementById("paket").value,
+                    tagihan: Number(document.getElementById("tagihan").value),
+                    jatuh_tempo: tglTempo,
+                    no_wa: no_wa, 
+                    kode_odp: document.getElementById("pilihan_odp").value,
+                    port_odp: document.getElementById("port_odp").value, 
+                    status_bayar: "Belum Bayar"
+                });
+                document.getElementById("formPelanggan").reset();
+                alert("Pelanggan baru berhasil didaftarkan ke cloud database!");
+            });
         }
     </script>
 </body>
