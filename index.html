@@ -374,19 +374,25 @@
                     return `https://wa.me/${noWa}?text=${encodeURIComponent(teksJadi)}`;
                 }
 
-                // BROADCAST MASSAL SEQUENTIAL
-                document.getElementById("btnKirimMassal").addEventListener("click", () => {
+                // BROADCAST MASSAL AMAN (ANTREAN MANUAL TERKONTROL)
+                document.getElementById("btnKirimMassal").addEventListener("click", async () => {
                     const odpSedangMaint = Object.keys(statusOdpGlobal).filter(namaOdp => statusOdpGlobal[namaOdp] === true);
                     const terdampak = listPelangganGlobal.filter(p => odpSedangMaint.includes(p.kode_odp));
                     
                     if(terdampak.length === 0) return alert("Tidak ada pelanggan yang terdampak.");
                     
-                    if(confirm(`Sistem akan membuka tab WhatsApp berurutan untuk ${terdampak.length} pelanggan. Lanjutkan?`)) {
-                        terdampak.forEach((p, index) => {
-                            setTimeout(() => {
-                                window.open(generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp), '_blank');
-                            }, index * 1500); 
-                        });
+                    if(confirm(`Sistem akan membantu Anda membuka tab WhatsApp berurutan untuk ${terdampak.length} pelanggan. Izinkan pop-up jika diminta browser Anda. Lanjutkan?`)) {
+                        for (let i = 0; i < terdampak.length; i++) {
+                            const p = terdampak[i];
+                            const url = generateLinkWhatsApp(p.no_wa, p.nama, p.kode_odp);
+                            const w = window.open(url, '_blank');
+                            
+                            if(!w) {
+                                alert("Pengiriman terhenti karena pop-up browser terblokir. Harap izinkan pop-up pada pengaturan browser Anda.");
+                                break;
+                            }
+                            await new Promise(resolve => setTimeout(resolve, 2500)); 
+                        }
                     }
                 });
 
@@ -529,8 +535,11 @@
                                 </button>
                             </td>
                             <td class="p-4 text-center">
-                                <button class="btn-isolir text-xs font-bold bg-rose-600 text-white px-2 py-1 rounded-xl" data-wa="${data.no_wa}" data-nama="${data.nama}" data-inv="${data.id_tagihan}" data-tagihan="${data.tagihan}">
-                                    ⚠️ Isolir / Notif
+                                <button class="btn-isolir text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-xl block w-full mb-1" data-wa="${data.no_wa}" data-nama="${data.nama}" data-inv="${data.id_tagihan}" data-tagihan="${data.tagihan}">
+                                    ⚠️ Isolir/Notif
+                                </button>
+                                <button class="btn-notif-mt-indiv text-xs font-bold bg-amber-600 text-white px-2.5 py-1 rounded-xl block w-full" data-wa="${data.no_wa}" data-nama="${data.nama}" data-odp="${data.kode_odp || '-'}">
+                                    📢 Info Mt
                                 </button>
                             </td>
                             <td class="p-4 text-center">
@@ -581,7 +590,7 @@
                         window.print();
                     }));
 
-                    // REDAKSI BARU: NOTIFIKASI JATUH TEMPO / REMINDER ISOLIR (SOPAN & PANJANG)
+                    // NOTIFIKASI JATUH TEMPO / REMINDER ISOLIR + METODE BAYAR BARU
                     document.querySelectorAll('.btn-isolir').forEach(b => b.addEventListener('click', (e) => {
                         const btn = e.target;
                         const wa = btn.getAttribute('data-wa');
@@ -589,8 +598,19 @@
                         const inv = btn.getAttribute('data-inv');
                         const tag = formatRupiah(btn.getAttribute('data-tagihan'));
                         
-                        const teksIsolir = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu. Melalui pesan resmi ini, kami dari bagian administrasi NETLAND.id ingin menginformasikan mengenai layanan internet aktif Anda dengan nomor Invoice *${inv}*.\n\nKami mencatat bahwa masa aktif paket internet Anda telah memasuki/melewati tanggal jatuh tempo pembayaran dengan total tagihan sebesar *${tag}*.\n\nAgar kenyamanan aktivitas digital Anda dan keluarga di rumah tetap terjaga tanpa adanya kendala pemutusan (isolir) sistem otomatis, kami memohon kesediaan Bapak/Ibu untuk melakukan pembaruan pembayaran sebelum sistem melakukan penonaktifan akses PPPoE sementara.\n\nJika Bapak/Ibu sudah melakukan pembayaran atau membutuhkan bantuan/konfirmasi lebih lanjut mengenai detail tagihan, silakan abaikan pesan ini atau hubungi tim support kami dengan melampirkan bukti transfer.\n\nTerima kasih banyak atas perhatian, loyalitas, dan kerja sama yang terjalin dengan baik.\n\nHormat kami,\nBilling Management NETLAND.id`;
+                        const teksIsolir = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nSemoga Bapak/Ibu dalam keadaan sehat selalu. Melalui pesan resmi ini, kami dari bagian administrasi NETLAND.id ingin menginformasikan mengenai layanan internet aktif Anda dengan nomor Invoice *${inv}*.\n\nKami mencatat bahwa masa aktif paket internet Anda telah memasuki/melewati tanggal jatuh tempo pembayaran dengan total tagihan sebesar *${tag}*.\n\nAgar kenyamanan aktivitas digital Anda dan keluarga di rumah tetap terjaga tanpa adanya kendala pemutusan (isolir) sistem otomatis, kami memohon kesediaan Bapak/Ibu untuk melakukan pembaruan pembayaran sebelum sistem melakukan penonaktifan akses PPPoE sementara.\n\nBerikut rincian metode pembayaran resmi kami:\n💵 Pembayaran cash dapat menghubungi 👤 Mang Dayat : 085710857846\n\n🏦 Pembayaran Transfer :\nBANK BCA : 5290262188\nAtas nama : Muhamad Ridwan Arif\n\nJika Bapak/Ibu sudah melakukan pembayaran atau membutuhkan bantuan/konfirmasi lebih lanjut mengenai detail tagihan, silakan abaikan pesan ini atau hubungi tim support kami dengan melampirkan bukti transfer.\n\nTerima Kasih banyak atas perhatian, loyalitas, dan kerja sama yang terjalin dengan baik.\n\nHormat kami,\nBilling Management NETLAND.id`;
                         window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksIsolir)}`, '_blank');
+                    }));
+
+                    // NOTIFIKASI GANGGUAN / MAINTENANCE INDIVIDUAL
+                    document.querySelectorAll('.btn-notif-mt-indiv').forEach(b => b.addEventListener('click', (e) => {
+                        const btn = e.target;
+                        const wa = btn.getAttribute('data-wa');
+                        const nama = btn.getAttribute('data-nama');
+                        const odp = btn.getAttribute('data-odp');
+                        
+                        const teksMtIndiv = `Selamat pagi/siang/malam, Bapak/Ibu *${nama}*.\n\nKami menginformasikan bahwa saat ini sedang dilakukan pemeliharaan jaringan berkala (maintenance) pada infrastruktur koneksi ODP *${odp}* demi meningkatkan kualitas dan kestabilan koneksi internet Anda.\n\nProses ini menyebabkan pemutusan akses internet sementara waktu pada perangkat di rumah Anda. Tim teknisi lapangan kami sedang mengupayakan estimasi perbaikan selesai secepatnya.\n\nMohon maaf yang sebesar-besarnya atas ketidaknyamanan yang ditimbulkan dalam aktivitas Anda. Terima kasih banyak atas pengertian dan kerja samanya.\n\nSalam hangat,\nCustomer Care NETLAND.id`;
+                        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(teksMtIndiv)}`, '_blank');
                     }));
 
                     perbaruiPanelNotifikasiMassal();
@@ -632,4 +652,3 @@
     </script>
 </body>
 </html>
-
